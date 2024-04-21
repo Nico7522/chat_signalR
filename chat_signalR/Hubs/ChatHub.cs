@@ -19,25 +19,25 @@ namespace chat_signalR.Hubs
             await Clients.All.SendAsync("ReceiveMessage", "admin", $"{conn.Username} has joined");
         }
 
-        public async Task JoinSpecificChatRoom(UserConnection conn)
+        public async Task JoinSpecificChatRoom(string name, string roomNumber)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, conn.ChatRoom);
-
-            _sharedDB.connection[Context.ConnectionId] = conn;
-            await Clients.Group(conn.ChatRoom).SendAsync("JoinSpecificChatRoom", "admin", $"{conn.Username} has joined {conn.ChatRoom}");
+            _sharedDB.connection[Context.ConnectionId] = name;
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomNumber);
+            await Clients.Group(roomNumber).SendAsync("JoinSpecificChatRoom", $"{name} has joined room {roomNumber}");
         }
 
-        public async Task ReceiveSpecificMessage(string msg)
+        public async Task ReceiveSpecificMessage(string msg, string roomNumber)
         {
-            if (_sharedDB.connection.TryGetValue(Context.ConnectionId, out UserConnection? conn)) {
-                await Clients.Group(conn.ChatRoom).SendAsync("ReceiveSpecificMessage", conn.Username, msg);
+            if (_sharedDB.connection.TryGetValue(Context.ConnectionId, out string? name)) {
+                await Clients.Group(roomNumber).SendAsync("ReceiveSpecificMessage", name, msg);
             }
         }
 
-        public async Task PointingPresent(int id)
+        public async Task PointingPresent(int id, int status)
         {
             if(_sharedDB.UserList.TryGetValue(id, out User? userFound))
             {
+                userFound.Status = status;
                 await Clients.All.SendAsync("PointingPresent", userFound);
             } 
           
